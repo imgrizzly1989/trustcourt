@@ -1,0 +1,42 @@
+export enum AgreementStatus {
+  CREATED = "CREATED",
+  FUNDED = "FUNDED",
+  SUBMITTED = "SUBMITTED",
+  APPROVED = "APPROVED",
+  DISPUTED = "DISPUTED",
+  RESOLVED = "RESOLVED",
+}
+
+export type AgreementClaim = {
+  clientClaim: string;
+  builderClaim: string;
+  evidenceLinks: string[];
+  createdAt: string;
+};
+
+export type AgreementVerdict = {
+  winner: "client" | "builder" | "split";
+  paymentSplit: {
+    clientPercent: number;
+    builderPercent: number;
+  };
+  confidence: number;
+  reasoning: string;
+  missingEvidence: string[];
+  riskFlags: string[];
+};
+
+export type Agreement = {
+  id: string;
+  client: string;
+  builder: string;
+  amount: number;
+  deadline: string;
+  title: string;
+  terms: string;
+  status: AgreementStatus;
+  workUrl: string;
+  createdAt: string;
+  claims?: AgreementClaim[];
+  verdict?: AgreementVerdict;
+};

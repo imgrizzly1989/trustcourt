@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMetaMaskWallet } from "@/lib/web3";
 
 export function ConnectMetaMaskButton() {
+  const [networkSwitchError, setNetworkSwitchError] = useState<string | null>(null);
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
   const {
     chain,
     chainId,
@@ -16,8 +19,26 @@ export function ConnectMetaMaskButton() {
     isConnected,
     isConnecting,
     requiredChain,
+    switchToRequiredChain,
     wrongNetwork,
   } = useMetaMaskWallet();
+
+  async function handleSwitchNetwork() {
+    setNetworkSwitchError(null);
+    setIsSwitchingNetwork(true);
+
+    try {
+      await switchToRequiredChain();
+    } catch (error) {
+      setNetworkSwitchError(
+        error instanceof Error
+          ? error.message
+          : "Could not switch MetaMask network.",
+      );
+    } finally {
+      setIsSwitchingNetwork(false);
+    }
+  }
 
   if (!hasMetaMask) {
     return (
@@ -46,8 +67,24 @@ export function ConnectMetaMaskButton() {
       </div>
 
       {wrongNetwork ? (
+        <div className="grid gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-destructive">
+          <p>Wrong network. Please switch MetaMask to {requiredChain.name}.</p>
+          <Button
+            disabled={isSwitchingNetwork}
+            onClick={handleSwitchNetwork}
+            type="button"
+            variant="outline"
+          >
+            {isSwitchingNetwork
+              ? "Switching..."
+              : "Add / Switch to GenLayer Testnet"}
+          </Button>
+        </div>
+      ) : null}
+
+      {networkSwitchError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-destructive">
-          Wrong network. Please switch MetaMask to {requiredChain.name}.
+          {networkSwitchError}
         </p>
       ) : null}
 

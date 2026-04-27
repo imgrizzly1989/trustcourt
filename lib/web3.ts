@@ -13,8 +13,8 @@ import {
   useDisconnect,
   useReconnect,
 } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
-import type { EIP1193Provider } from "viem";
+import { mainnet } from "wagmi/chains";
+import { defineChain, type EIP1193Provider } from "viem";
 
 type MetaMaskProvider = EIP1193Provider & {
   isMetaMask?: true;
@@ -27,8 +27,33 @@ declare global {
   }
 }
 
-export const supportedChains = [sepolia, mainnet] as const;
-export const requiredChain = sepolia;
+const GENLAYER_TESTNET_CHAIN_ID = 4221;
+const GENLAYER_TESTNET_CHAIN_ID_HEX = "0x107D";
+
+export const genLayerTestnet = defineChain({
+  id: GENLAYER_TESTNET_CHAIN_ID,
+  name: "GenLayer Testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "GEN",
+    symbol: "GEN",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://rpc.testnet-chain.genlayer.com"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "GenLayer Testnet Explorer",
+      url: "https://explorer.testnet-chain.genlayer.com",
+    },
+  },
+  testnet: true,
+});
+
+export const supportedChains = [genLayerTestnet, mainnet] as const;
+export const requiredChain = genLayerTestnet;
 
 export const wagmiConfig = createConfig({
   chains: supportedChains,
@@ -49,7 +74,7 @@ export const wagmiConfig = createConfig({
     storage: typeof window === "undefined" ? noopStorage : window.localStorage,
   }),
   transports: {
-    [sepolia.id]: http(),
+    [genLayerTestnet.id]: http("https://rpc.testnet-chain.genlayer.com"),
     [mainnet.id]: http(),
   },
 });
@@ -81,7 +106,45 @@ export function isMetaMaskInstalled(): boolean {
 }
 
 export function isSupportedChain(chainId: number | undefined): boolean {
-  return supportedChains.some((chain) => chain.id === chainId);
+  return chainId === requiredChain.id;
+}
+
+export async function addOrSwitchToGenLayerTestnet(): Promise<void> {
+  const provider = getMetaMaskProvider();
+
+  if (!provider) {
+    throw new Error("MetaMask is not installed.");
+  }
+
+  try {
+    await provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: GENLAYER_TESTNET_CHAIN_ID_HEX }],
+    });
+  } catch (error) {
+    const switchError = error as { code?: number };
+
+    if (switchError.code !== 4902) {
+      throw error;
+    }
+
+    await provider.request({
+      method: "wallet_addEthereumChain",
+      params: [
+        {
+          blockExplorerUrls: ["https://explorer.testnet-chain.genlayer.com"],
+          chainId: GENLAYER_TESTNET_CHAIN_ID_HEX,
+          chainName: "GenLayer Testnet",
+          nativeCurrency: {
+            decimals: 18,
+            name: "GEN",
+            symbol: "GEN",
+          },
+          rpcUrls: ["https://rpc.testnet-chain.genlayer.com"],
+        },
+      ],
+    });
+  }
 }
 
 export function formatAddress(address: string | undefined): string {
@@ -126,6 +189,7 @@ export function useMetaMaskWallet() {
     metaMaskConnector,
     reconnect,
     requiredChain,
+    switchToRequiredChain: addOrSwitchToGenLayerTestnet,
     wrongNetwork,
   };
 }

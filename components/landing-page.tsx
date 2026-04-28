@@ -25,7 +25,7 @@ const features = [
 
 const stats = [
   { label: "Demo escrow", value: "$3.2k" },
-  { label: "Mock confidence", value: "86%" },
+  { label: "Simulated confidence", value: "86%" },
   { label: "Client refund", value: "80%" },
 ];
 
@@ -105,7 +105,7 @@ export function LandingPage() {
               <div className="relative mt-5 rounded-[1.35rem] border border-white/10 bg-black/25 p-5">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs font-medium uppercase tracking-[0.22em] text-violet-100">
-                    Mock AI reasoning
+                    Simulated AI reasoning
                   </p>
                   <p className="text-xs text-muted-foreground">local verdict preview</p>
                 </div>

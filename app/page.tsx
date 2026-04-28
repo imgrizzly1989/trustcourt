@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ConnectMetaMaskButton } from "@/components/connect-metamask-button";
+
 const steps = [
   {
     title: "Lock Agreement",
@@ -60,8 +62,13 @@ export default function Home() {
 
           <div className="my-4 border-t border-zinc-800" />
 
-          <div className="text-sm text-zinc-400">AI Verdict</div>
-          <div className="mt-1 text-lg font-medium text-white">Split 70 / 30</div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-sm text-zinc-400">AI Verdict</div>
+            <div className="rounded bg-purple-500/10 px-2 py-1 text-xs text-purple-300">Simulated</div>
+          </div>
+          <div className="mt-1 text-lg font-medium text-white">
+            Split payout: 70% client / 30% builder
+          </div>
 
           <div className="mt-3 text-xs text-zinc-500">
             <span className="font-medium text-purple-400">Confidence: 82%</span>
@@ -70,6 +77,12 @@ export default function Home() {
       </section>
 
       <div className="mx-auto max-w-[1100px] px-6">
+        <section className="mt-8 flex justify-end">
+          <div className="max-w-full">
+            <ConnectMetaMaskButton />
+          </div>
+        </section>
+
         <section className="mt-32">
           <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.02em] text-white">
             How it works

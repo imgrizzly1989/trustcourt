@@ -45,6 +45,29 @@ export function AgreementDetail({ agreement }: AgreementDetailProps) {
         <InfoCard label="Created" value={agreement.createdAt.slice(0, 10)} />
       </section>
 
+      <section className="rounded-3xl border border-dashed border-border bg-muted/30 p-8">
+        <h2 className="text-xl font-semibold">GenLayer execution boundary</h2>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          Mode: {agreement.genLayerMode ?? "demo"}. Demo mode keeps localStorage as
+          the source of truth and uses mock transaction hashes. Real mode only runs
+          when public GenLayer env config is present.
+        </p>
+        {agreement.genLayerContractAddress ? (
+          <p className="mt-3 break-all text-sm text-muted-foreground">
+            Contract: {agreement.genLayerContractAddress}
+          </p>
+        ) : null}
+        {agreement.genLayerTxs?.length ? (
+          <ul className="mt-4 grid gap-2 text-sm text-muted-foreground">
+            {agreement.genLayerTxs.map((tx) => (
+              <li className="break-all" key={`${tx.action}-${tx.createdAt}`}>
+                {tx.action} ({tx.mode}): {tx.hash ?? "hash pending"}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
       <section className="rounded-3xl border border-border bg-card p-8">
         <h2 className="text-xl font-semibold">Terms</h2>
         <p className="mt-4 leading-7 text-muted-foreground">{agreement.terms}</p>

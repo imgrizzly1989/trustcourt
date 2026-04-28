@@ -26,6 +26,13 @@ export type AgreementVerdict = {
   riskFlags: string[];
 };
 
+export type AgreementGenLayerTx = {
+  action: string;
+  mode: "demo" | "real";
+  hash?: string;
+  createdAt: string;
+};
+
 export type Agreement = {
   id: string;
   client: string;
@@ -37,6 +44,9 @@ export type Agreement = {
   status: AgreementStatus;
   workUrl: string;
   createdAt: string;
+  genLayerMode?: "demo" | "real";
+  genLayerContractAddress?: string;
+  genLayerTxs?: AgreementGenLayerTx[];
   claims?: AgreementClaim[];
   verdict?: AgreementVerdict;
 };

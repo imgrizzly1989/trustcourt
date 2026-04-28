@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
+  createAgreement as createGenLayerAgreement,
+  getGenLayerModeLabel,
+  getGenLayerReadinessMessage,
+} from "@/lib/genlayerClient";
+import { getGenLayerRuntimeConfig } from "@/lib/genlayerConfig";
+import {
   AgreementDraft,
   AgreementValidationErrors,
   createAgreementFromDraft,
@@ -26,6 +32,9 @@ export function CreateAgreementForm() {
   const router = useRouter();
   const [draft, setDraft] = useState<AgreementDraft>(initialDraft);
   const [errors, setErrors] = useState<AgreementValidationErrors>({});
+  const [txError, setTxError] = useState("");
+  const [txMessage, setTxMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updateField(
     field: keyof AgreementDraft,
@@ -38,19 +47,59 @@ export function CreateAgreementForm() {
     setErrors((currentErrors) => ({ ...currentErrors, [field]: undefined }));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextErrors = validateAgreementDraft(draft);
     setErrors(nextErrors);
+    setTxError("");
+    setTxMessage("");
 
     if (hasValidationErrors(nextErrors)) {
       return;
     }
 
-    const agreement = createAgreementFromDraft(draft);
-    saveAgreement(agreement);
-    router.push(`/agreements/${agreement.id}`);
+    setIsSubmitting(true);
+
+    try {
+      const agreement = createAgreementFromDraft(draft);
+      const txResult = await createGenLayerAgreement({
+        amount: agreement.amount,
+        builder: agreement.builder,
+        client: agreement.client,
+        id: agreement.id,
+        terms: agreement.terms,
+        title: agreement.title,
+      });
+
+      if (txResult.state === "failure") {
+        setTxError(txResult.error ?? "Unable to create agreement transaction.");
+        return;
+      }
+
+      const config = getGenLayerRuntimeConfig();
+      saveAgreement({
+        ...agreement,
+        genLayerContractAddress: config.contractAddress,
+        genLayerMode: txResult.mode,
+        genLayerTxs: [
+          {
+            action: "create_agreement",
+            createdAt: new Date().toISOString(),
+            hash: txResult.txHash,
+            mode: txResult.mode,
+          },
+        ],
+      });
+      setTxMessage(
+        txResult.mode === "real"
+          ? "Agreement transaction sent to GenLayer."
+          : "Agreement saved in demo mode with a mock transaction hash.",
+      );
+      router.push(`/agreements/${agreement.id}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -126,9 +175,17 @@ export function CreateAgreementForm() {
         ) : null}
       </div>
 
-      <Button className="w-fit" type="submit">
-        Create Agreement
+      <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">GenLayer mode: {getGenLayerModeLabel()}</p>
+        <p className="mt-1">{getGenLayerReadinessMessage()}</p>
+      </div>
+
+      <Button className="w-fit" disabled={isSubmitting} type="submit">
+        {isSubmitting ? "Creating..." : "Create Agreement"}
       </Button>
+
+      {txError ? <p className="text-sm text-destructive">{txError}</p> : null}
+      {txMessage ? <p className="text-sm text-muted-foreground">{txMessage}</p> : null}
     </form>
   );
 }

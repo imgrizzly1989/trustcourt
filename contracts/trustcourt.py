@@ -1,206 +1,315 @@
-"""
-TrustCourt Intelligent Contract draft.
-
-GenLayer-style Python pseudocode for a freelance escrow agreement with
-minimal deterministic state transitions and an isolated AI arbitration hook.
-
-Step 5 scope:
-- design only
-- no frontend integration
-- no Hermes integration
-- no external contract calls
-"""
-
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, List, Optional
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+from genlayer import *
+import json
 
 
-class AgreementStatus(str, Enum):
-    CREATED = "CREATED"
-    FUNDED = "FUNDED"
-    SUBMITTED = "SUBMITTED"
-    APPROVED = "APPROVED"
-    DISPUTED = "DISPUTED"
-    RESOLVED = "RESOLVED"
+@gl.evm.contract_interface
+class _Recipient:
+    class View:
+        pass
+
+    class Write:
+        pass
 
 
-@dataclass
-class Claim:
-    party: str
-    statement: str
-    evidence_url: str = ""
+class TrustCourt(gl.Contract):
+    """Freelance escrow + AI arbitration Intelligent Contract for GenLayer.
 
+    Deterministic code owns escrow state and payout math. GenLayer's
+    non-deterministic LLM boundary is used only after a dispute exists.
+    """
 
-@dataclass
-class Verdict:
-    winner: str
-    summary: str
-    payout_client: int
-    payout_builder: int
+    agreements: TreeMap[str, bool]
+    clients: TreeMap[str, Address]
+    builders: TreeMap[str, Address]
+    amounts: TreeMap[str, u256]
+    statuses: TreeMap[str, str]
+    titles: TreeMap[str, str]
+    terms: TreeMap[str, str]
+    work_urls: TreeMap[str, str]
+    client_claims: TreeMap[str, str]
+    builder_claims: TreeMap[str, str]
+    evidence_links: TreeMap[str, str]
+    verdict_winners: TreeMap[str, str]
+    verdict_client_percent: TreeMap[str, u32]
+    verdict_builder_percent: TreeMap[str, u32]
+    verdict_confidence_bps: TreeMap[str, u32]
+    verdict_reasoning: TreeMap[str, str]
+    verdict_missing_evidence: TreeMap[str, str]
+    verdict_risk_flags: TreeMap[str, str]
+    payout_clients: TreeMap[str, u256]
+    payout_builders: TreeMap[str, u256]
 
-
-@dataclass
-class Agreement:
-    id: str
-    client: str
-    builder: str
-    amount: int
-    status: AgreementStatus
-    terms: str
-    work_url: str = ""
-    claims: List[Claim] = field(default_factory=list)
-    verdict: Optional[Verdict] = None
-
-
-class TrustCourt:
     def __init__(self):
-        self.agreements: Dict[str, Agreement] = {}
+        self.agreements = TreeMap[str, bool]()
+        self.clients = TreeMap[str, Address]()
+        self.builders = TreeMap[str, Address]()
+        self.amounts = TreeMap[str, u256]()
+        self.statuses = TreeMap[str, str]()
+        self.titles = TreeMap[str, str]()
+        self.terms = TreeMap[str, str]()
+        self.work_urls = TreeMap[str, str]()
+        self.client_claims = TreeMap[str, str]()
+        self.builder_claims = TreeMap[str, str]()
+        self.evidence_links = TreeMap[str, str]()
+        self.verdict_winners = TreeMap[str, str]()
+        self.verdict_client_percent = TreeMap[str, u32]()
+        self.verdict_builder_percent = TreeMap[str, u32]()
+        self.verdict_confidence_bps = TreeMap[str, u32]()
+        self.verdict_reasoning = TreeMap[str, str]()
+        self.verdict_missing_evidence = TreeMap[str, str]()
+        self.verdict_risk_flags = TreeMap[str, str]()
+        self.payout_clients = TreeMap[str, u256]()
+        self.payout_builders = TreeMap[str, u256]()
 
-    # ---------------------------------------------------------------------
-    # Deterministic logic
-    # ---------------------------------------------------------------------
-
+    @gl.public.write
     def create_agreement(
         self,
         agreement_id: str,
-        client: str,
-        builder: str,
-        amount: int,
+        builder: Address,
+        amount: u256,
+        title: str,
         terms: str,
-    ) -> Agreement:
-        self._require(agreement_id not in self.agreements, "Agreement already exists")
-        self._require(client != "", "Client is required")
-        self._require(builder != "", "Builder is required")
-        self._require(client != builder, "Client and builder must differ")
-        self._require(amount > 0, "Amount must be greater than zero")
+    ) -> None:
+        creator = gl.message.sender_address
+        self._require(not self.agreements.get(agreement_id, False), "Agreement already exists")
+        self._require(agreement_id.strip() != "", "Agreement id is required")
+        self._require(builder != creator, "Client and builder must differ")
+        self._require(amount > u256(0), "Amount must be greater than zero")
+        self._require(title.strip() != "", "Title is required")
         self._require(terms.strip() != "", "Terms are required")
 
-        agreement = Agreement(
-            id=agreement_id,
-            client=client,
-            builder=builder,
-            amount=amount,
-            status=AgreementStatus.CREATED,
-            terms=terms.strip(),
-        )
-        self.agreements[agreement_id] = agreement
-        return agreement
+        self.agreements[agreement_id] = True
+        self.clients[agreement_id] = creator
+        self.builders[agreement_id] = builder
+        self.amounts[agreement_id] = amount
+        self.statuses[agreement_id] = "CREATED"
+        self.titles[agreement_id] = title.strip()
+        self.terms[agreement_id] = terms.strip()
+        self.work_urls[agreement_id] = ""
+        self.client_claims[agreement_id] = ""
+        self.builder_claims[agreement_id] = ""
+        self.evidence_links[agreement_id] = ""
+        self.verdict_winners[agreement_id] = ""
+        self.verdict_client_percent[agreement_id] = u32(0)
+        self.verdict_builder_percent[agreement_id] = u32(0)
+        self.verdict_confidence_bps[agreement_id] = u32(0)
+        self.verdict_reasoning[agreement_id] = ""
+        self.verdict_missing_evidence[agreement_id] = ""
+        self.verdict_risk_flags[agreement_id] = ""
+        self.payout_clients[agreement_id] = u256(0)
+        self.payout_builders[agreement_id] = u256(0)
 
-    def fund_agreement(self, agreement_id: str, sender: str, value: int) -> Agreement:
-        agreement = self._get_agreement(agreement_id)
+    @gl.public.write.payable
+    def fund_agreement(self, agreement_id: str) -> None:
+        self._require_exists(agreement_id)
+        self._require(gl.message.sender_address == self.clients[agreement_id], "Only client can fund")
+        self._require(self.statuses[agreement_id] == "CREATED", "Agreement is not fundable")
+        self._require(gl.message.value == self.amounts[agreement_id], "Funding value must match amount")
 
-        self._require(sender == agreement.client, "Only client can fund")
-        self._require(agreement.status == AgreementStatus.CREATED, "Agreement is not fundable")
-        self._require(value == agreement.amount, "Funding amount must match agreement amount")
+        self.statuses[agreement_id] = "FUNDED"
 
-        agreement.status = AgreementStatus.FUNDED
-        return agreement
-
-    def submit_work(self, agreement_id: str, sender: str, work_url: str) -> Agreement:
-        agreement = self._get_agreement(agreement_id)
-
-        self._require(sender == agreement.builder, "Only builder can submit work")
-        self._require(agreement.status == AgreementStatus.FUNDED, "Agreement is not ready for submission")
+    @gl.public.write
+    def submit_work(self, agreement_id: str, work_url: str) -> None:
+        self._require_exists(agreement_id)
+        self._require(gl.message.sender_address == self.builders[agreement_id], "Only builder can submit work")
+        self._require(self.statuses[agreement_id] == "FUNDED", "Agreement is not ready for submission")
         self._require(work_url.strip() != "", "Work URL is required")
 
-        agreement.work_url = work_url.strip()
-        agreement.status = AgreementStatus.SUBMITTED
-        return agreement
+        self.work_urls[agreement_id] = work_url.strip()
+        self.statuses[agreement_id] = "SUBMITTED"
 
-    def approve_work(self, agreement_id: str, sender: str) -> Agreement:
-        agreement = self._get_agreement(agreement_id)
+    @gl.public.write
+    def approve_work(self, agreement_id: str) -> None:
+        self._require_exists(agreement_id)
+        self._require(gl.message.sender_address == self.clients[agreement_id], "Only client can approve work")
+        self._require(self.statuses[agreement_id] == "SUBMITTED", "Agreement is not approvable")
 
-        self._require(sender == agreement.client, "Only client can approve work")
-        self._require(agreement.status == AgreementStatus.SUBMITTED, "Agreement is not approvable")
+        amount = self.amounts[agreement_id]
+        self.statuses[agreement_id] = "APPROVED"
+        self.verdict_winners[agreement_id] = "builder"
+        self.verdict_client_percent[agreement_id] = u32(0)
+        self.verdict_builder_percent[agreement_id] = u32(100)
+        self.verdict_confidence_bps[agreement_id] = u32(10000)
+        self.verdict_reasoning[agreement_id] = "Client approved submitted work."
+        self.payout_clients[agreement_id] = u256(0)
+        self.payout_builders[agreement_id] = amount
+        self._release_to(self.builders[agreement_id], amount)
 
-        # Placeholder for future deterministic payout to builder.
-        agreement.verdict = Verdict(
-            winner=agreement.builder,
-            summary="Client approved submitted work.",
-            payout_client=0,
-            payout_builder=agreement.amount,
-        )
-        agreement.status = AgreementStatus.APPROVED
-        return agreement
-
+    @gl.public.write
     def raise_dispute(
         self,
         agreement_id: str,
-        sender: str,
-        claim: str,
-        evidence_url: str = "",
-    ) -> Agreement:
-        agreement = self._get_agreement(agreement_id)
-
-        self._require(sender in [agreement.client, agreement.builder], "Only parties can dispute")
+        client_claim: str,
+        builder_claim: str,
+        evidence: str,
+    ) -> None:
+        self._require_exists(agreement_id)
+        caller = gl.message.sender_address
         self._require(
-            agreement.status in [AgreementStatus.FUNDED, AgreementStatus.SUBMITTED],
+            caller == self.clients[agreement_id] or caller == self.builders[agreement_id],
+            "Only parties can dispute",
+        )
+        self._require(
+            self.statuses[agreement_id] == "FUNDED" or self.statuses[agreement_id] == "SUBMITTED",
             "Agreement is not disputable",
         )
-        self._require(claim.strip() != "", "Claim is required")
+        self._require(client_claim.strip() != "", "Client claim is required")
+        self._require(builder_claim.strip() != "", "Builder claim is required")
 
-        agreement.claims.append(
-            Claim(
-                party=sender,
-                statement=claim.strip(),
-                evidence_url=evidence_url.strip(),
-            )
+        self.client_claims[agreement_id] = client_claim.strip()
+        self.builder_claims[agreement_id] = builder_claim.strip()
+        self.evidence_links[agreement_id] = evidence.strip()
+        self.statuses[agreement_id] = "DISPUTED"
+
+    @gl.public.write
+    def resolve_dispute(self, agreement_id: str) -> None:
+        self._require_exists(agreement_id)
+        self._require(self.statuses[agreement_id] == "DISPUTED", "Agreement is not disputed")
+
+        verdict = self._arbitrate_with_ai(agreement_id)
+        winner = str(verdict.get("winner", "")).lower()
+        client_percent = u32(verdict.get("client_percent", 0))
+        builder_percent = u32(verdict.get("builder_percent", 0))
+        confidence_bps = u32(verdict.get("confidence_bps", 0))
+        reasoning = str(verdict.get("reasoning", "")).strip()
+        missing_evidence = str(verdict.get("missing_evidence", "")).strip()
+        risk_flags = str(verdict.get("risk_flags", "")).strip()
+
+        self._validate_verdict(winner, client_percent, builder_percent, confidence_bps, reasoning)
+
+        amount = self.amounts[agreement_id]
+        builder_payout = (amount * u256(builder_percent)) // u256(100)
+        client_payout = amount - builder_payout
+
+        self.verdict_winners[agreement_id] = winner
+        self.verdict_client_percent[agreement_id] = client_percent
+        self.verdict_builder_percent[agreement_id] = builder_percent
+        self.verdict_confidence_bps[agreement_id] = confidence_bps
+        self.verdict_reasoning[agreement_id] = reasoning
+        self.verdict_missing_evidence[agreement_id] = missing_evidence
+        self.verdict_risk_flags[agreement_id] = risk_flags
+        self.payout_clients[agreement_id] = client_payout
+        self.payout_builders[agreement_id] = builder_payout
+        self.statuses[agreement_id] = "RESOLVED"
+
+        if client_payout > u256(0):
+            self._release_to(self.clients[agreement_id], client_payout)
+        if builder_payout > u256(0):
+            self._release_to(self.builders[agreement_id], builder_payout)
+
+    @gl.public.view
+    def get_agreement(self, agreement_id: str) -> dict:
+        self._require_exists(agreement_id)
+        return {
+            "id": agreement_id,
+            "client": str(self.clients[agreement_id]),
+            "builder": str(self.builders[agreement_id]),
+            "amount": str(self.amounts[agreement_id]),
+            "status": self.statuses[agreement_id],
+            "title": self.titles[agreement_id],
+            "terms": self.terms[agreement_id],
+            "work_url": self.work_urls[agreement_id],
+            "client_claim": self.client_claims[agreement_id],
+            "builder_claim": self.builder_claims[agreement_id],
+            "evidence_links": self.evidence_links[agreement_id],
+            "verdict": self.get_verdict(agreement_id),
+        }
+
+    @gl.public.view
+    def get_verdict(self, agreement_id: str) -> dict:
+        self._require_exists(agreement_id)
+        return {
+            "winner": self.verdict_winners[agreement_id],
+            "client_percent": self.verdict_client_percent[agreement_id],
+            "builder_percent": self.verdict_builder_percent[agreement_id],
+            "confidence_bps": self.verdict_confidence_bps[agreement_id],
+            "reasoning": self.verdict_reasoning[agreement_id],
+            "missing_evidence": self.verdict_missing_evidence[agreement_id],
+            "risk_flags": self.verdict_risk_flags[agreement_id],
+            "client_payout": str(self.payout_clients[agreement_id]),
+            "builder_payout": str(self.payout_builders[agreement_id]),
+        }
+
+    def _arbitrate_with_ai(self, agreement_id: str) -> dict:
+        dispute_packet = {
+            "title": self.titles[agreement_id],
+            "terms": self.terms[agreement_id],
+            "work_url": self.work_urls[agreement_id],
+            "client_claim": self.client_claims[agreement_id],
+            "builder_claim": self.builder_claims[agreement_id],
+            "evidence_links": self.evidence_links[agreement_id],
+            "allowed_winners": ["client", "builder", "split"],
+        }
+        prompt = f"""
+You are TrustCourt, an AI arbitrator for a freelance escrow agreement.
+Use only the provided dispute packet. Do not assume URL contents unless the packet states them.
+Return JSON only with this exact shape:
+{{
+  "winner": "client|builder|split",
+  "client_percent": 0,
+  "builder_percent": 100,
+  "confidence_bps": 8000,
+  "reasoning": "short evidence-based explanation",
+  "missing_evidence": "comma-separated missing evidence, or empty string",
+  "risk_flags": "comma-separated risks, or empty string"
+}}
+Rules:
+- client_percent + builder_percent must equal 100.
+- confidence_bps must be an integer from 0 to 10000.
+- If evidence is ambiguous or unverified, prefer split with lower confidence.
+- Never invent facts outside this packet.
+Dispute packet:
+{json.dumps(dispute_packet)}
+"""
+
+        def leader_fn():
+            return gl.nondet.exec_prompt(prompt, response_format="json")
+
+        def validator_fn(leaders_res) -> bool:
+            if not isinstance(leaders_res, gl.vm.Return):
+                return False
+            candidate = leaders_res.calldata
+            if not self._is_structurally_valid_ai_verdict(candidate):
+                return False
+            local_candidate = leader_fn()
+            return self._is_structurally_valid_ai_verdict(local_candidate)
+
+        return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
+
+    def _is_structurally_valid_ai_verdict(self, verdict: dict) -> bool:
+        winner = str(verdict.get("winner", "")).lower()
+        if winner not in ["client", "builder", "split"]:
+            return False
+        client_percent = u32(verdict.get("client_percent", 0))
+        builder_percent = u32(verdict.get("builder_percent", 0))
+        confidence_bps = u32(verdict.get("confidence_bps", 0))
+        reasoning = str(verdict.get("reasoning", "")).strip()
+        return (
+            client_percent + builder_percent == u32(100)
+            and confidence_bps <= u32(10000)
+            and reasoning != ""
         )
-        agreement.status = AgreementStatus.DISPUTED
-        return agreement
 
-    def resolve_dispute(self, agreement_id: str, sender: str) -> Agreement:
-        agreement = self._get_agreement(agreement_id)
+    def _validate_verdict(
+        self,
+        winner: str,
+        client_percent: u32,
+        builder_percent: u32,
+        confidence_bps: u32,
+        reasoning: str,
+    ) -> None:
+        self._require(winner in ["client", "builder", "split"], "Invalid winner")
+        self._require(client_percent + builder_percent == u32(100), "Verdict split must equal 100")
+        self._require(confidence_bps <= u32(10000), "Confidence is out of bounds")
+        self._require(reasoning != "", "Reasoning is required")
 
-        self._require(agreement.status == AgreementStatus.DISPUTED, "Agreement is not disputed")
-        self._require(len(agreement.claims) > 0, "No claims to resolve")
+    def _release_to(self, recipient: Address, amount: u256) -> None:
+        _Recipient(recipient).emit_transfer(value=amount)
 
-        verdict = self._arbitrate_with_ai(agreement)
-        self._validate_verdict(agreement, verdict)
-
-        # Placeholder for future deterministic payout execution.
-        agreement.verdict = verdict
-        agreement.status = AgreementStatus.RESOLVED
-        return agreement
-
-    # ---------------------------------------------------------------------
-    # AI logic boundary
-    # ---------------------------------------------------------------------
-
-    def _arbitrate_with_ai(self, agreement: Agreement) -> Verdict:
-        """
-        AI arbitration boundary.
-
-        Future implementation should call GenLayer validators/Hermes-style AI
-        consensus with only the dispute packet:
-        - terms
-        - work_url
-        - claims
-        - evidence URLs
-
-        This method must return a structured Verdict. It must not mutate state.
-        """
-        raise NotImplementedError("AI arbitration is intentionally not implemented in Step 5")
-
-    # ---------------------------------------------------------------------
-    # Internal deterministic guards
-    # ---------------------------------------------------------------------
-
-    def _get_agreement(self, agreement_id: str) -> Agreement:
-        self._require(agreement_id in self.agreements, "Agreement not found")
-        return self.agreements[agreement_id]
-
-    def _validate_verdict(self, agreement: Agreement, verdict: Verdict) -> None:
-        self._require(verdict.winner in [agreement.client, agreement.builder], "Invalid winner")
-        self._require(verdict.payout_client >= 0, "Invalid client payout")
-        self._require(verdict.payout_builder >= 0, "Invalid builder payout")
-        self._require(
-            verdict.payout_client + verdict.payout_builder == agreement.amount,
-            "Verdict payouts must equal escrow amount",
-        )
-        self._require(verdict.summary.strip() != "", "Verdict summary is required")
+    def _require_exists(self, agreement_id: str) -> None:
+        self._require(self.agreements.get(agreement_id, False), "Agreement not found")
 
     def _require(self, condition: bool, message: str) -> None:
         if not condition:
-            raise ValueError(message)
+            raise gl.vm.UserError(message)

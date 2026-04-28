@@ -2,106 +2,140 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
-const workflowCards = [
+const steps = [
   {
-    step: "01",
-    title: "Lock agreement",
-    description:
-      "Define parties, value, deadline, and acceptance criteria before the work begins.",
+    title: "Lock Agreement",
+    description: "Define terms and deposit funds",
   },
   {
-    step: "02",
-    title: "Submit evidence",
-    description:
-      "Capture work links, claims, and dispute evidence in a structured arbitration record.",
+    title: "Submit Work",
+    description: "Provide deliverables and evidence",
   },
   {
-    step: "03",
-    title: "Resolve with AI",
-    description:
-      "Preview how an Intelligent Contract can reason over subjective delivery disputes.",
+    title: "AI Resolves",
+    description: "Simulated AI evaluates and decides outcome",
   },
 ];
 
 export default function Home() {
   return (
-    <main className="relative isolate flex min-h-screen flex-1 overflow-hidden bg-[#05050a] text-white">
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.28),transparent_34%),radial-gradient(circle_at_80%_20%,rgba(34,211,238,0.14),transparent_28%),linear-gradient(180deg,#05050a_0%,#070711_48%,#030305_100%)]" />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-25 [mask-image:radial-gradient(circle_at_top,black,transparent_72%)]" />
-      <div className="absolute left-1/2 top-20 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-violet-500/25 blur-3xl sm:h-[34rem] sm:w-[34rem]" />
+    <main className="relative isolate flex min-h-screen flex-1 overflow-hidden bg-[#0b0b0f] text-white">
+      <style>{`body > header { display: none; }`}</style>
 
-      <section className="mx-auto flex w-full max-w-6xl flex-col px-5 pb-20 pt-16 sm:px-6 sm:pb-24 sm:pt-24 lg:pt-28">
-        <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-white/[0.045] px-4 py-2 text-xs font-medium text-violet-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_60px_rgba(124,58,237,0.18)] backdrop-blur">
-            <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.95)]" />
-            Demo Mode — arbitration is simulated
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_0%,rgba(124,58,237,0.20),transparent_34%),radial-gradient(circle_at_78%_12%,rgba(37,99,235,0.16),transparent_28%),linear-gradient(180deg,#0b0b0f_0%,#0b0b0f_58%,#060609_100%)]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:84px_84px] opacity-30 [mask-image:radial-gradient(circle_at_top,black,transparent_70%)]" />
+
+      <div className="mx-auto w-full max-w-6xl px-5 sm:px-6">
+        <section className="flex min-h-[720px] flex-col items-center justify-center pb-20 pt-[120px] text-center">
+          <div className="rounded-full border border-[#222] bg-[#111]/80 px-4 py-2 text-xs font-medium text-[#aaa] shadow-[0_16px_60px_rgba(0,0,0,0.28)] backdrop-blur">
+            Demo Mode — simulated arbitration
           </div>
 
-          <h1 className="mt-8 max-w-5xl text-5xl font-semibold leading-[0.92] tracking-[-0.075em] text-white sm:text-7xl lg:text-8xl">
-            AI-enforced agreements on GenLayer
+          <h1 className="mt-8 max-w-5xl text-5xl font-bold leading-[0.95] tracking-[-0.065em] text-white sm:text-7xl lg:text-8xl">
+            Resolve freelance disputes with AI
           </h1>
 
-          <p className="mt-7 max-w-3xl text-base leading-7 text-zinc-300 sm:text-xl sm:leading-8">
-            TrustCourt demonstrates how Intelligent Contracts can resolve freelance disputes using evidence, reasoning, and simulated AI arbitration.
+          <p className="mt-7 max-w-3xl text-base leading-7 text-[#aaa] sm:text-xl sm:leading-8">
+            TrustCourt demonstrates how GenLayer Intelligent Contracts can evaluate real work and enforce outcomes using AI.
           </p>
 
           <div className="mt-10 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
             <Button
               asChild
-              className="h-12 rounded-xl bg-white px-6 text-sm font-semibold text-black shadow-[0_18px_60px_rgba(255,255,255,0.14)] hover:bg-zinc-200 sm:h-11"
+              className="h-12 rounded-xl border-0 bg-gradient-to-r from-violet-500 to-blue-500 px-7 text-sm font-semibold text-white shadow-[0_18px_70px_rgba(99,102,241,0.32)] hover:from-violet-400 hover:to-blue-400"
               size="lg"
             >
-              <Link href="/demo">View Demo Dispute</Link>
+              <Link href="/demo">View Demo</Link>
             </Button>
             <Button
               asChild
-              className="h-12 rounded-xl border-white/12 bg-white/[0.045] px-6 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/[0.075] sm:h-11"
+              className="h-12 rounded-xl border border-[#222] bg-transparent px-7 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-white/[0.04]"
               size="lg"
               variant="outline"
             >
               <Link href="/create">Create Agreement</Link>
             </Button>
           </div>
-        </div>
+        </section>
 
-        <div className="mt-16 grid gap-4 md:grid-cols-3 lg:mt-20">
-          {workflowCards.map((card) => (
-            <article
-              className="group rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition duration-200 hover:-translate-y-1 hover:border-violet-300/25 hover:bg-white/[0.065]"
-              key={card.title}
+        <section className="py-20 sm:py-24">
+          <div className="grid gap-5 md:grid-cols-3">
+            {steps.map((step, index) => (
+              <article
+                className="group rounded-xl border border-[#222] bg-[#111] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.26)] transition duration-200 hover:-translate-y-1 hover:border-violet-400/40"
+                key={step.title}
+              >
+                <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/18 to-blue-500/18 text-sm font-semibold text-violet-100 ring-1 ring-white/10">
+                  0{index + 1}
+                </div>
+                <h2 className="text-2xl font-semibold tracking-[-0.04em] text-white">
+                  {step.title}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-[#aaa]">{step.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="py-20 text-center sm:py-24">
+          <div className="mx-auto max-w-3xl rounded-[2rem] border border-[#222] bg-[#111] px-6 py-12 shadow-[0_26px_100px_rgba(0,0,0,0.34)] sm:px-10 sm:py-16">
+            <h2 className="text-3xl font-bold tracking-[-0.05em] text-white sm:text-5xl">
+              See a real dispute resolved
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-[#aaa] sm:text-lg">
+              Walk through a simulated arbitration where AI evaluates claims and determines payout.
+            </p>
+            <Button
+              asChild
+              className="mt-8 h-12 rounded-xl border-0 bg-gradient-to-r from-violet-500 to-blue-500 px-7 text-sm font-semibold text-white shadow-[0_18px_70px_rgba(99,102,241,0.28)] hover:from-violet-400 hover:to-blue-400"
+              size="lg"
             >
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">
-                  {card.step}
-                </span>
-                <span className="h-2 w-2 rounded-full bg-violet-300/80 shadow-[0_0_24px_rgba(167,139,250,0.8)]" />
-              </div>
-              <h2 className="mt-8 text-2xl font-semibold tracking-[-0.045em] text-white">
-                {card.title}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-zinc-400">{card.description}</p>
-            </article>
-          ))}
-        </div>
+              <Link href="/demo">Open Demo</Link>
+            </Button>
+          </div>
+        </section>
 
-        <section className="mt-5 overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.035))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_30px_100px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:p-8 lg:mt-6 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-violet-200">
-                Why GenLayer?
-              </p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-[-0.055em] text-white sm:text-5xl">
-                Subjective work needs more than deterministic code.
-              </h2>
-            </div>
-            <div className="rounded-[1.5rem] border border-white/10 bg-black/25 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-6">
-              <p className="text-base leading-7 text-zinc-300 sm:text-lg sm:leading-8">
-                Normal smart contracts are excellent at enforcing objective rules, but they cannot judge whether freelance work matches a brief, whether evidence is persuasive, or how to split payment when delivery is partial. GenLayer Intelligent Contracts are designed for AI-assisted decisions, making them a natural fit for evidence-based dispute resolution.
-              </p>
+        <section className="grid gap-8 py-20 sm:py-24 lg:grid-cols-2 lg:items-center">
+          <div>
+            <h2 className="text-3xl font-bold tracking-[-0.05em] text-white sm:text-5xl">
+              Why GenLayer?
+            </h2>
+            <p className="mt-6 max-w-xl text-base leading-7 text-[#aaa] sm:text-lg sm:leading-8">
+              Traditional smart contracts execute rules. GenLayer introduces AI-assisted decision-making, enabling contracts to evaluate subjective outcomes like quality of work.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[#222] bg-[#111] p-6 shadow-[0_22px_90px_rgba(0,0,0,0.3)]">
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between rounded-xl border border-[#222] bg-[#0b0b0f] px-4 py-4">
+                <span className="text-sm font-medium text-white">Rules</span>
+                <span className="text-sm text-[#aaa]">predictable</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-[#222] bg-[#0b0b0f] px-4 py-4">
+                <span className="text-sm font-medium text-white">Decisions</span>
+                <span className="text-sm text-[#aaa]">flexible</span>
+              </div>
+              <div className="rounded-xl border border-violet-400/30 bg-gradient-to-r from-violet-500/16 to-blue-500/16 px-4 py-5 shadow-[0_0_70px_rgba(99,102,241,0.12)]">
+                <p className="text-sm font-semibold text-white">AI Validators</p>
+                <p className="mt-2 text-sm leading-6 text-violet-100/75">
+                  Bring reasoning to outcomes that cannot be captured by rigid if/then logic.
+                </p>
+              </div>
             </div>
           </div>
         </section>
-      </section>
+
+        <footer className="flex flex-col gap-4 border-t border-[#222] py-8 text-sm text-[#aaa] sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            className="transition hover:text-white"
+            href="https://github.com/imgrizzly1989/trustcourt"
+            target="_blank"
+          >
+            GitHub repo
+          </Link>
+          <p>Built for GenLayer Hackathon</p>
+        </footer>
+      </div>
     </main>
   );
 }

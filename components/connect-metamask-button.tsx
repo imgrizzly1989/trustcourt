@@ -42,22 +42,21 @@ export function ConnectMetaMaskButton() {
 
   if (!hasMetaMask) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-4 text-sm">
-        <p className="font-medium">MetaMask is not installed.</p>
+      <div className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-zinc-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
         <a
-          className="mt-1 block text-muted-foreground underline underline-offset-4"
+          className="underline-offset-4 hover:text-white hover:underline"
           href="https://metamask.io/download/"
           rel="noreferrer"
           target="_blank"
         >
-          Install MetaMask to connect a wallet.
+          MetaMask not installed
         </a>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 text-sm sm:min-w-72">
+    <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs text-zinc-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:min-w-64">
       <div className="grid gap-1">
         <p className="text-muted-foreground">Status: {connectionStatus}</p>
         <p>Address: {formattedAddress}</p>

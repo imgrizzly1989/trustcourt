@@ -52,26 +52,49 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/80 p-6 shadow-xl backdrop-blur before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:bg-gradient-to-r before:from-purple-500/10 before:to-blue-500/10 before:blur-xl before:content-['']">
-          <div className="text-sm text-zinc-400">Agreement: Landing Page Build</div>
+        <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/95 p-6 text-left shadow-2xl shadow-purple-950/20 backdrop-blur before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:bg-gradient-to-r before:from-purple-500/20 before:via-blue-500/10 before:to-cyan-500/20 before:blur-2xl before:content-['']">
+          <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Agreement</div>
+          <div className="mt-2 text-base font-medium text-white">Landing Page Build</div>
 
-          <div className="mt-4 flex justify-between">
-            <div className="text-xs text-zinc-500">Status</div>
-            <div className="rounded bg-red-500/10 px-2 py-1 text-xs text-red-400">Disputed</div>
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <div className="text-sm text-zinc-500">Status</div>
+            <div className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300">
+              Disputed
+            </div>
           </div>
 
-          <div className="my-4 border-t border-zinc-800" />
-
-          <div className="flex items-center justify-between gap-4">
-            <div className="text-sm text-zinc-400">AI Verdict</div>
-            <div className="rounded bg-purple-500/10 px-2 py-1 text-xs text-purple-300">Simulated</div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/45 p-4">
+              <div className="text-xs uppercase tracking-[0.16em] text-zinc-500">Client</div>
+              <div className="mt-2 text-sm font-medium text-white">Payment refused</div>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/45 p-4">
+              <div className="text-xs uppercase tracking-[0.16em] text-zinc-500">Builder</div>
+              <div className="mt-2 text-sm font-medium text-white">Work delivered</div>
+            </div>
           </div>
-          <div className="mt-1 text-lg font-medium text-white">
-            Split payout: 70% client / 30% builder
+
+          <div className="my-6 border-t border-zinc-800" />
+
+          <div>
+            <div className="text-sm font-medium text-zinc-300">AI Analysis</div>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              Mobile layout partially broken. Requirements partially met.
+            </p>
           </div>
 
-          <div className="mt-3 text-xs text-zinc-500">
-            <span className="font-medium text-purple-400">Confidence: 82%</span>
+          <div className="my-6 border-t border-zinc-800" />
+
+          <div>
+            <div className="text-sm font-medium text-zinc-300">Verdict</div>
+            <div className="mt-3 bg-gradient-to-r from-purple-300 via-blue-300 to-cyan-300 bg-clip-text text-3xl font-semibold tracking-tight text-transparent lg:text-4xl">
+              Split payout: 70% / 30%
+            </div>
+            <div className="mt-3 text-sm font-medium text-purple-300">Confidence: 82%</div>
+          </div>
+
+          <div className="mt-6 border-t border-zinc-800 pt-4 text-xs uppercase tracking-[0.18em] text-zinc-500">
+            Simulated AI decision
           </div>
         </div>
       </section>
